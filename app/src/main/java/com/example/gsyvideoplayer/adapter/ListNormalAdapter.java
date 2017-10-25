@@ -10,18 +10,13 @@ import android.widget.ImageView;
 import com.example.gsyvideoplayer.R;
 import com.example.gsyvideoplayer.listener.SampleListener;
 import com.example.gsyvideoplayer.model.VideoModel;
+import com.example.gsyvideoplayer.video.SampleCoverVideo;
 import com.shuyu.gsyvideoplayer.GSYVideoManager;
-import com.shuyu.gsyvideoplayer.GSYVideoPlayer;
-import com.shuyu.gsyvideoplayer.listener.StandardVideoAllCallBack;
 import com.shuyu.gsyvideoplayer.utils.Debuger;
-import com.shuyu.gsyvideoplayer.utils.FileUtils;
 import com.shuyu.gsyvideoplayer.video.StandardGSYVideoPlayer;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.shuyu.gsyvideoplayer.GSYVideoPlayer.CURRENT_STATE_NORMAL;
 
 /**
  * Created by shuyu on 2016/11/12.
@@ -68,32 +63,26 @@ public class ListNormalAdapter extends BaseAdapter {
         if (convertView == null) {
             holder = new ViewHolder();
             convertView = inflater.inflate(R.layout.list_video_item_normal, null);
-            holder.gsyVideoPlayer = (StandardGSYVideoPlayer) convertView.findViewById(R.id.video_item_player);
-            holder.imageView = new ImageView(context);
+            holder.gsyVideoPlayer = (SampleCoverVideo) convertView.findViewById(R.id.video_item_player);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        //增加封面
-        holder.imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        if (position % 2 == 0) {
-            holder.imageView.setImageResource(R.mipmap.xxx1);
-        } else {
-            holder.imageView.setImageResource(R.mipmap.xxx2);
-        }
-        if (holder.imageView.getParent() != null) {
-            ViewGroup viewGroup = (ViewGroup) holder.imageView.getParent();
-            viewGroup.removeView(holder.imageView);
-        }
-        holder.gsyVideoPlayer.setThumbImageView(holder.imageView);
 
         final String url = "http://baobab.wdjcdn.com/14564977406580.mp4";
         //final String url = "http://7xse1z.com1.z0.glb.clouddn.com/1491813192";
         //final String url = "http://111.198.24.133:83/yyy_login_server/pic/YB059284/97778276040859/1.mp4";
 
+
+        if (position % 2 == 0) {
+            holder.gsyVideoPlayer.loadCoverImage(url, R.mipmap.xxx1);
+        } else {
+            holder.gsyVideoPlayer.loadCoverImage(url, R.mipmap.xxx2);
+        }
+
         //默认缓存路径
-        holder.gsyVideoPlayer.setUp(url, true , null, "这是title");
+        holder.gsyVideoPlayer.setUp(url, true, null, "这是title");
 
         //holder.gsyVideoPlayer.setNeedShowWifiTip(false);
 
@@ -147,6 +136,7 @@ public class ListNormalAdapter extends BaseAdapter {
         holder.gsyVideoPlayer.setLockLand(true);
         holder.gsyVideoPlayer.setPlayTag(TAG);
         holder.gsyVideoPlayer.setShowFullAnimation(true);
+        holder.gsyVideoPlayer.setIsTouchWiget(false);
         //循环
         //holder.gsyVideoPlayer.setLooping(true);
         holder.gsyVideoPlayer.setNeedLockFull(true);
@@ -155,7 +145,7 @@ public class ListNormalAdapter extends BaseAdapter {
 
         holder.gsyVideoPlayer.setPlayPosition(position);
 
-        holder.gsyVideoPlayer.setStandardVideoAllCallBack(new SampleListener(){
+        holder.gsyVideoPlayer.setStandardVideoAllCallBack(new SampleListener() {
             @Override
             public void onPrepared(String url, Object... objects) {
                 super.onPrepared(url, objects);
@@ -192,8 +182,7 @@ public class ListNormalAdapter extends BaseAdapter {
 
 
     class ViewHolder {
-        StandardGSYVideoPlayer gsyVideoPlayer;
-        ImageView imageView;
+        SampleCoverVideo gsyVideoPlayer;
     }
 
 }

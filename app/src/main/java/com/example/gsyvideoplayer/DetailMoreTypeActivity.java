@@ -2,6 +2,8 @@ package com.example.gsyvideoplayer;
 
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
@@ -9,15 +11,19 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.gsyvideoplayer.listener.SampleListener;
 import com.example.gsyvideoplayer.model.SwitchVideoModel;
 import com.example.gsyvideoplayer.video.SampleVideo;
-import com.shuyu.gsyvideoplayer.GSYVideoPlayer;
+import com.shuyu.gsyvideoplayer.utils.Debuger;
+import com.shuyu.gsyvideoplayer.video.base.GSYVideoPlayer;
 import com.shuyu.gsyvideoplayer.listener.LockClickListener;
 import com.shuyu.gsyvideoplayer.utils.OrientationUtils;
 import com.shuyu.gsyvideoplayer.video.StandardGSYVideoPlayer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import butterknife.BindView;
@@ -25,10 +31,10 @@ import butterknife.ButterKnife;
 
 /**
  * Created by guoshuyu on 2017/6/18.
- * ampleVideo支持全屏与非全屏切换的清晰度，旋转，镜像等功能.
+ * sampleVideo支持全屏与非全屏切换的清晰度，旋转，镜像等功能.
  */
 
-public class DetailMoreTypeActivity extends AppCompatActivity{
+public class DetailMoreTypeActivity extends AppCompatActivity {
     @BindView(R.id.post_detail_nested_scroll)
     NestedScrollView postDetailNestedScroll;
 
@@ -42,8 +48,13 @@ public class DetailMoreTypeActivity extends AppCompatActivity{
 
     private boolean isPlay;
     private boolean isPause;
+    private boolean isRelease;
 
     private OrientationUtils orientationUtils;
+
+    private MediaMetadataRetriever mCoverMedia;
+
+    private ImageView coverImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,10 +78,10 @@ public class DetailMoreTypeActivity extends AppCompatActivity{
         detailPlayer.setUp(list, true, "");
 
         //增加封面
-        ImageView imageView = new ImageView(this);
-        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        imageView.setImageResource(R.mipmap.xxx1);
-        detailPlayer.setThumbImageView(imageView);
+        coverImageView = new ImageView(this);
+        coverImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        //coverImageView.setImageResource(R.mipmap.xxx1);
+        detailPlayer.setThumbImageView(coverImageView);
 
         resolveNormalVideoUI();
 
@@ -137,6 +148,7 @@ public class DetailMoreTypeActivity extends AppCompatActivity{
             }
         });
 
+        loadFirstFrameCover(source1);
     }
 
     @Override
@@ -155,12 +167,14 @@ public class DetailMoreTypeActivity extends AppCompatActivity{
 
     @Override
     protected void onPause() {
+        getCurPlay().onVideoPause();
         super.onPause();
         isPause = true;
     }
 
     @Override
     protected void onResume() {
+        getCurPlay().onVideoResume();
         super.onResume();
         isPause = false;
     }
@@ -168,10 +182,17 @@ public class DetailMoreTypeActivity extends AppCompatActivity{
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        GSYVideoPlayer.releaseAllVideos();
+        isRelease = true;
+        if (isPlay) {
+            getCurPlay().release();
+        }
         //GSYPreViewManager.instance().releaseMediaPlayer();
         if (orientationUtils != null)
             orientationUtils.releaseListener();
+        if (mCoverMedia != null) {
+            mCoverMedia.release();
+            mCoverMedia = null;
+        }
     }
 
     @Override
@@ -179,27 +200,77 @@ public class DetailMoreTypeActivity extends AppCompatActivity{
         super.onConfigurationChanged(newConfig);
         //如果旋转了就全屏
         if (isPlay && !isPause) {
-            if (newConfig.orientation == ActivityInfo.SCREEN_ORIENTATION_USER) {
-                if (!detailPlayer.isIfCurrentIsFullscreen()) {
-                    detailPlayer.startWindowFullscreen(DetailMoreTypeActivity.this, true, true);
-                }
-            } else {
-                //新版本isIfCurrentIsFullscreen的标志位内部提前设置了，所以不会和手动点击冲突
-                if (detailPlayer.isIfCurrentIsFullscreen()) {
-                    StandardGSYVideoPlayer.backFromWindowFull(this);
-                }
-                if (orientationUtils != null) {
-                    orientationUtils.setEnable(true);
-                }
-            }
+            detailPlayer.onConfigurationChanged(this, newConfig, orientationUtils);
         }
+    }
+
+
+
+    private GSYVideoPlayer getCurPlay() {
+        if (detailPlayer.getFullWindowPlayer() != null) {
+            return  detailPlayer.getFullWindowPlayer();
+        }
+        return detailPlayer;
     }
 
 
     private void resolveNormalVideoUI() {
         //增加title
         detailPlayer.getTitleTextView().setVisibility(View.GONE);
-        detailPlayer.getTitleTextView().setText("测试视频");
         detailPlayer.getBackButton().setVisibility(View.GONE);
+    }
+
+
+    /**
+     * 这里只是演示，并不建议直接这么做
+     * MediaMetadataRetriever最好做一个独立的管理器
+     * 使用缓存
+     * 注意资源的开销和异步等
+     *
+     * @param url
+     */
+    public void loadFirstFrameCover(String url) {
+
+        //原始方法
+        /*final MediaMetadataRetriever mediaMetadataRetriever = getMediaMetadataRetriever(url);
+        //获取帧图片
+        if (getMediaMetadataRetriever(url) != null) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    final Bitmap bitmap = mediaMetadataRetriever
+                            .getFrameAtTime(1000, MediaMetadataRetriever.OPTION_CLOSEST);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (bitmap != null && !isRelease) {
+                                Debuger.printfLog("time " + System.currentTimeMillis());
+                                //显示
+                                coverImageView.setImageBitmap(bitmap);
+                            }
+                        }
+                    });
+                }
+            }).start();
+        }*/
+
+        //可以参考Glide，内部也是封装了MediaMetadataRetriever
+        Glide.with(this.getApplicationContext())
+                .setDefaultRequestOptions(
+                        new RequestOptions()
+                                .frame(1000000)
+                                .centerCrop()
+                                .error(R.mipmap.xxx2)
+                                .placeholder(R.mipmap.xxx1))
+                .load(url)
+                .into(coverImageView);
+    }
+
+    public MediaMetadataRetriever getMediaMetadataRetriever(String url) {
+        if (mCoverMedia == null) {
+            mCoverMedia = new MediaMetadataRetriever();
+        }
+        mCoverMedia.setDataSource(url, new HashMap<String, String>());
+        return mCoverMedia;
     }
 }

@@ -1,6 +1,5 @@
 package com.example.gsyvideoplayer;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -19,6 +18,9 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.open_btn)
     Button openBtn;
 
+    @BindView(R.id.open_btn_empty)
+    Button openBtn2;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
     }
 
-    @OnClick({R.id.open_btn, R.id.list_btn, R.id.list_btn_2, R.id.list_detail, R.id.clear_cache, R.id.recycler, R.id.recycler_2, R.id.list_detail_list, R.id.web_detail, R.id.danmaku_video, R.id.fragment_video, R.id.more_type, R.id.input_type})
+    @OnClick({R.id.open_btn, R.id.list_btn, R.id.list_btn_2, R.id.list_detail, R.id.clear_cache, R.id.recycler, R.id.recycler_2, R.id.list_detail_list, R.id.web_detail, R.id.danmaku_video, R.id.fragment_video, R.id.more_type, R.id.input_type, R.id.open_btn_empty, R.id.open_control, R.id.open_filter})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.open_btn:
@@ -59,20 +61,34 @@ public class MainActivity extends AppCompatActivity {
                 JumpUtils.goToDetailListPlayer(this);
                 break;
             case R.id.web_detail:
-                //播放一个连续列表
+                //正常播放，带preview
                 JumpUtils.gotoWebDetail(this);
                 break;
             case R.id.danmaku_video:
                 //播放一个弹幕视频
                 JumpUtils.gotoDanmaku(this);
+                break;
             case R.id.fragment_video:
                 //播放一个弹幕视频
                 JumpUtils.gotoFragment(this);
+                break;
             case R.id.more_type:
                 //跳到多类型详情播放器，比如切换分辨率，旋转等
                 JumpUtils.gotoMoreType(this);
+                break;
             case R.id.input_type:
                 JumpUtils.gotoInput(this);
+                break;
+            case R.id.open_btn_empty:
+                JumpUtils.goToPlayEmptyControlActivity(this, openBtn2);
+                break;
+            case R.id.open_control:
+                JumpUtils.gotoControl(this);
+                break;
+            case R.id.open_filter:
+                JumpUtils.gotoFilter(this);
+                break;
+
             case R.id.clear_cache:
                 //清理缓存
                 GSYVideoManager.clearAllDefaultCache(MainActivity.this);

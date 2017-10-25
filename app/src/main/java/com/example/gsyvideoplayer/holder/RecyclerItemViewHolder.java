@@ -49,9 +49,18 @@ public class RecyclerItemViewHolder extends RecyclerItemBaseHolder {
                 getRecyclerBaseAdapter().notifyDataSetChanged();
                 //listVideoUtil.setLoop(true);
                 listVideoUtil.setPlayPositionAndTag(position, TAG);
-                final String url = "http://baobab.wdjcdn.com/14564977406580.mp4";
+                listVideoUtil.setTitle("title " + position);
+                String url;
+                if (position % 2 == 0) {
+                    url = "http://baobab.wdjcdn.com/14564977406580.mp4";
+                } else {
+                    url = "http://7xse1z.com1.z0.glb.clouddn.com/1491813192";
+                }
                 //listVideoUtil.setCachePath(new File(FileUtils.getPath()));
                 listVideoUtil.startPlay(url);
+
+                //必须在startPlay之后设置才能生效
+                //listVideoUtil.getGsyVideoPlayer().getTitleTextView().setVisibility(View.VISIBLE);
             }
         });
     }

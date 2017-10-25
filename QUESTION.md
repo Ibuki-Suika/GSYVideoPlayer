@@ -71,7 +71,7 @@ sourceSets {
 
 　是否监听了列表滑动了，在监听里更新了列表之类的。
 
-#### 4、目前不支持3gp或者mepg。
+#### 4、普通模式不支持3gp或者mepg，mepg可使用ex-so依赖。
 
 如果拍摄的视频播放不了，可以尝试用使用系统录制的项目：[VideoRecord](https://github.com/CarGuo/VideoRecord)
 或者使用JAVACV录制的项目：[FFmpegRecorder](https://github.com/CrazyOrr/FFmpegRecorder )，测试视频是否可以播放。
@@ -90,7 +90,14 @@ setUp(String url, boolean cacheWithPlay····)
 
 ```
 
-#### 6、为什么拖动视屏会弹回来，因为ijk的FFMPEG对关键帧问题，目前无解。
+#### 6、为什么拖动视屏会弹回来，因为ijk的FFMPEG对关键帧问题。
+可以尝试以下设置
+```
+VideoOptionModel videoOptionModel = new VideoOptionModel(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "enable-accurate-seek", 1);
+List<VideoOptionModel> list = new ArrayList<>();
+list.add(videoOptionModel);
+GSYVideoManager.instance().setOptionModelList(list);
+```
 
 #### 7、视频旋转后重新开始，配置AndroidManifest.xml。
 ```
@@ -156,4 +163,20 @@ https://github.com/Bilibili/ijkplayer/issues/2874
 
 https://github.com/CarGuo/GSYVideoPlayer/issues/252
 
+#### 16、播放本地m3u8有问题
 
+```
+VideoOptionModel videoOptionModel =
+        new VideoOptionModel(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "protocol_whitelist", crypto,file,http,https,tcp,tls,udp);
+List<VideoOptionModel> list = new ArrayList<>();
+list.add(videoOptionModel);
+GSYVideoManager.instance().setOptionModelList(list);
+```
+#### 17、rtsp连接有问题
+
+```
+VideoOptionModel videoOptionModel = new VideoOptionModel(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "rtsp_transport", "tcp");
+List<VideoOptionModel> list = new ArrayList<>();
+list.add(videoOphtionModel);
+GSYVideoManager.instance().setOptionModelList(list);
+```

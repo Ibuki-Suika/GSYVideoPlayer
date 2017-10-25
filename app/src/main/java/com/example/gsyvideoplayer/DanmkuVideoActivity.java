@@ -11,8 +11,8 @@ import android.widget.RelativeLayout;
 
 import com.example.gsyvideoplayer.listener.SampleListener;
 import com.example.gsyvideoplayer.video.DanmakuVideoPlayer;
-import com.shuyu.gsyvideoplayer.GSYPreViewManager;
-import com.shuyu.gsyvideoplayer.GSYVideoPlayer;
+import com.example.gsyvideoplayer.video.SampleControlVideo;
+import com.shuyu.gsyvideoplayer.video.base.GSYVideoPlayer;
 import com.shuyu.gsyvideoplayer.listener.LockClickListener;
 import com.shuyu.gsyvideoplayer.utils.OrientationUtils;
 import com.shuyu.gsyvideoplayer.video.StandardGSYVideoPlayer;
@@ -146,12 +146,14 @@ public class DanmkuVideoActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        getCurPlay().onVideoPause();
         super.onPause();
         isPause = true;
     }
 
     @Override
     protected void onResume() {
+        getCurPlay().onVideoResume();
         super.onResume();
         isPause = false;
     }
@@ -159,29 +161,21 @@ public class DanmkuVideoActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        GSYVideoPlayer.releaseAllVideos();
+        if (isPlay) {
+            getCurPlay().release();
+        }
+        //GSYPreViewManager.instance().releaseMediaPlayer();
         if (orientationUtils != null)
             orientationUtils.releaseListener();
     }
+
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         //如果旋转了就全屏
         if (isPlay && !isPause) {
-            if (newConfig.orientation == ActivityInfo.SCREEN_ORIENTATION_USER) {
-                if (!danmakuVideoPlayer.isIfCurrentIsFullscreen()) {
-                    danmakuVideoPlayer.startWindowFullscreen(DanmkuVideoActivity.this, true, true);
-                }
-            } else {
-                //新版本isIfCurrentIsFullscreen的标志位内部提前设置了，所以不会和手动点击冲突
-                if (danmakuVideoPlayer.isIfCurrentIsFullscreen()) {
-                    StandardGSYVideoPlayer.backFromWindowFull(this);
-                }
-                if (orientationUtils != null) {
-                    orientationUtils.setEnable(true);
-                }
-            }
+            danmakuVideoPlayer.onConfigurationChanged(this, newConfig, orientationUtils);
         }
     }
 
@@ -189,8 +183,14 @@ public class DanmkuVideoActivity extends AppCompatActivity {
     private void resolveNormalVideoUI() {
         //增加title
         danmakuVideoPlayer.getTitleTextView().setVisibility(View.GONE);
-        danmakuVideoPlayer.getTitleTextView().setText("测试视频");
         danmakuVideoPlayer.getBackButton().setVisibility(View.GONE);
+    }
+
+    private GSYVideoPlayer getCurPlay() {
+        if (danmakuVideoPlayer.getFullWindowPlayer() != null) {
+            return  danmakuVideoPlayer.getFullWindowPlayer();
+        }
+        return danmakuVideoPlayer;
     }
 
 }
